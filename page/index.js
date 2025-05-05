@@ -76,7 +76,7 @@ Page(
             "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI3YzlmNWQ2YWJkNDM0MjEwYjMxZDlkYThmNDg4OTI2ZCIsImlhdCI6MTc0MzczMDk2MywiZXhwIjoyMDU5MDkwOTYzfQ.FPJ0AU0wqHt6rPdMRXuaWRdMaihLtWec6nKt8-4006Q",
             "content-type": "application/json"
         },
-        body: JSON.stringify({entity_id: "cover.blinds_blinds"})
+        body: JSON.stringify({entity_id: "cover.blinds"})
       })
         .then((result) => {
           logger.log("receive data");
