@@ -7,8 +7,15 @@ import {
 } from "zosLoader:./index.[pf].layout.js";
 
 const logger = Logger.getLogger("fetch_api");
+function timeoutPromise(promise, timeout) {
+    const timeoutP = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout')), timeout);
+    });
+    return Promise.race([promise, timeoutP]);
+};
 
 let textWidget;
+
 Page(
   BasePage({
     state: {},
@@ -46,7 +53,7 @@ Page(
       });
     },
     toggleLight() {
-      this.httpRequest({
+      timeoutPromise(this.httpRequest({
         method: "POST",
         url: 'http://homeassistant.sphinx-city.ts.net:8123/api/services/light/toggle',
         headers: {
@@ -54,7 +61,7 @@ Page(
             "content-type": "application/json"
         },
         body: JSON.stringify({entity_id: "light.lamp"})
-      })
+      }), 3000)
         .then((result) => {
           logger.log("receive data");
           Object.keys(result).forEach((key) => {
@@ -66,10 +73,14 @@ Page(
             text: "Result: " + result.status
           })
         })
-        .catch((res) => {});
+        .catch((error) => {
+          hmUI.showToast({
+            text: error.toString()
+          })
+        });
     },
     toggleBlinds() {
-      this.httpRequest({
+      timeoutPromise(this.httpRequest({
         method: "POST",
         url: 'http://homeassistant.sphinx-city.ts.net:8123/api/services/cover/toggle',
         headers: {
@@ -77,7 +88,7 @@ Page(
             "content-type": "application/json"
         },
         body: JSON.stringify({entity_id: "cover.blinds"})
-      })
+      }), 3000)
         .then((result) => {
           logger.log("receive data");
           console.log(JSON.stringify(result.body))
@@ -86,21 +97,26 @@ Page(
             text: "Result: " + result.status
           })
         })
-        .catch((res) => {});
+        .catch((error) => {
+          hmUI.showToast({
+            text: error.toString()
+          })
+        });
     },
     test() {
-      this.request({
+      timeoutPromise(this.request({
         method: "TEST",
-      })
+      }), 3000)
         .then((result) => {
-          logger.log("receive data");
-          console.log(JSON.stringify(result))
-          console.log(result.status)
           hmUI.showToast({
-            text: "Result: " + result.status
+            text: "OK!"
           })
         })
-        .catch((res) => {});
+        .catch((error) => {
+          hmUI.showToast({
+            text: error.toString()
+          })
+        });
     },
   })
 );
