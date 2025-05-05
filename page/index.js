@@ -32,6 +32,18 @@ Page(
           this.toggleBlinds();
         },
       });
+      hmUI.createWidget(hmUI.widget.BUTTON, {
+        ...FETCH_BUTTON,
+        h: 50,
+        y: 380,
+        w: 200,
+        x: 466/2-200/2,
+
+        text: "Test",
+        click_func: (button_widget) => {
+          this.test();
+        },
+      });
     },
     toggleLight() {
       this.httpRequest({
@@ -69,6 +81,20 @@ Page(
         .then((result) => {
           logger.log("receive data");
           console.log(JSON.stringify(result.body))
+          console.log(result.status)
+          hmUI.showToast({
+            text: "Result: " + result.status
+          })
+        })
+        .catch((res) => {});
+    },
+    test() {
+      this.request({
+        method: "TEST",
+      })
+        .then((result) => {
+          logger.log("receive data");
+          console.log(JSON.stringify(result))
           console.log(result.status)
           hmUI.showToast({
             text: "Result: " + result.status
