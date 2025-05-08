@@ -14,27 +14,38 @@ function timeoutPromise(promise, timeout) {
     return Promise.race([promise, timeoutP]);
 };
 
+const headers = {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI3YzlmNWQ2YWJkNDM0MjEwYjMxZDlkYThmNDg4OTI2ZCIsImlhdCI6MTc0MzczMDk2MywiZXhwIjoyMDU5MDkwOTYzfQ.FPJ0AU0wqHt6rPdMRXuaWRdMaihLtWec6nKt8-4006Q",
+    "content-type": "application/json"
+}
+
 let textWidget;
+let temp, humidity;
+let lightButton, blindsButton;
+
+function log() {
+    console.log([...arguments].join(' '))
+}
 
 Page(
   BasePage({
     state: {},
     build() {
-      hmUI.createWidget(hmUI.widget.BUTTON, {
+      lightButton = hmUI.createWidget(hmUI.widget.BUTTON, {
         ...FETCH_BUTTON,
         h: 100,
         y: 130,
-        text: "Toggle Light",
+        text: "Light: ???",
         click_func: (button_widget) => {
           this.toggleLight();
         },
       });
-      hmUI.createWidget(hmUI.widget.BUTTON, {
+      blindsButton = hmUI.createWidget(hmUI.widget.BUTTON, {
         ...FETCH_BUTTON,
         h: 100,
         y: 250,
 
-        text: "Toggle Blinds",
+        text: "Blinds: ???",
         click_func: (button_widget) => {
           this.toggleBlinds();
         },
@@ -51,15 +62,93 @@ Page(
           this.test();
         },
       });
+
+      timeoutPromise(this.httpRequest({
+          method: "GET",
+          url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/sensor.temperature',
+          headers: headers
+      }), 3000)
+        .then((result) => {
+            log(result.body.state, result.body.attributes.unit_of_measurement)
+            temp.text =  [Number(result.body.state).toFixed(1), result.body.attributes.unit_of_measurement].join(' ')
+        })
+        .catch((error) => {
+          hmUI.showToast({
+            text: error.toString()
+          });
+        });
+
+      timeoutPromise(this.httpRequest({
+          method: "GET",
+          url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/sensor.humidity',
+          headers: headers
+      }), 3000)
+        .then((result) => {
+            log(result.body.state, result.body.attributes.unit_of_measurement)
+            humidity.text =  [Number(result.body.state).toFixed(1), result.body.attributes.unit_of_measurement].join(' ')
+        })
+        .catch((error) => {
+          hmUI.showToast({
+            text: error.toString()
+          });
+        });
+
+      timeoutPromise(this.httpRequest({
+          method: "GET",
+          url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/light.lamp',
+          headers: headers
+      }), 3000)
+        .then((response) => {
+            log(response.body.state)
+            lightButton.text =  ['Light:', response.body.state].join(' ')
+        })
+        .catch((error) => {
+          hmUI.showToast({
+            text: error.toString()
+          });
+        });
+
+      timeoutPromise(this.httpRequest({
+          method: "GET",
+          url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/cover.blinds',
+          headers: headers
+      }), 3000)
+        .then((response) => {
+            log(response.body.state)
+            blindsButton.text =  ['Blinds:', response.body.state].join(' ')
+        })
+        .catch((error) => {
+          hmUI.showToast({
+            text: error.toString()
+          });
+        });
+
+      temp = hmUI.createWidget(hmUI.widget.TEXT, {
+          x: 100,
+          y: 70,
+          w: 200,
+          h: 50,
+          text_size: px(36),
+          text: 'fooo',
+          color: '0xffffff'
+      })
+
+      humidity = hmUI.createWidget(hmUI.widget.TEXT, {
+          x: 263,
+          y: 70,
+          w: 200,
+          h: 50,
+          text_size: px(36),
+          text: 'fooo',
+          color: '0xffffff'
+      })
+
     },
     toggleLight() {
       timeoutPromise(this.httpRequest({
         method: "POST",
         url: 'http://homeassistant.sphinx-city.ts.net:8123/api/services/light/toggle',
-        headers: {
-            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI3YzlmNWQ2YWJkNDM0MjEwYjMxZDlkYThmNDg4OTI2ZCIsImlhdCI6MTc0MzczMDk2MywiZXhwIjoyMDU5MDkwOTYzfQ.FPJ0AU0wqHt6rPdMRXuaWRdMaihLtWec6nKt8-4006Q",
-            "content-type": "application/json"
-        },
+        headers: headers,
         body: JSON.stringify({entity_id: "light.lamp"})
       }), 3000)
         .then((result) => {
@@ -69,9 +158,8 @@ Page(
           })
           console.log(JSON.stringify(result))
           console.log(result.status)
-          hmUI.showToast({
-            text: "Result: " + result.status
-          })
+          console.log(JSON.stringify(result.body[0].state))
+          lightButton.text =  ['Light:', result.body[0].state].join(' ')
         })
         .catch((error) => {
           hmUI.showToast({
@@ -83,19 +171,27 @@ Page(
       timeoutPromise(this.httpRequest({
         method: "POST",
         url: 'http://homeassistant.sphinx-city.ts.net:8123/api/services/cover/toggle',
-        headers: {
-            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI3YzlmNWQ2YWJkNDM0MjEwYjMxZDlkYThmNDg4OTI2ZCIsImlhdCI6MTc0MzczMDk2MywiZXhwIjoyMDU5MDkwOTYzfQ.FPJ0AU0wqHt6rPdMRXuaWRdMaihLtWec6nKt8-4006Q",
-            "content-type": "application/json"
-        },
+        headers: headers,
         body: JSON.stringify({entity_id: "cover.blinds"})
       }), 3000)
         .then((result) => {
           logger.log("receive data");
           console.log(JSON.stringify(result.body))
           console.log(result.status)
-          hmUI.showToast({
-            text: "Result: " + result.status
-          })
+          timeoutPromise(this.httpRequest({
+              method: "GET",
+              url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/cover.blinds',
+              headers: headers
+          }), 3000)
+            .then((response) => {
+                log(response.body.state)
+                blindsButton.text =  ['Blinds:', response.body.state].join(' ')
+            })
+            .catch((error) => {
+              hmUI.showToast({
+                text: error.toString()
+              });
+            });
         })
         .catch((error) => {
           hmUI.showToast({
