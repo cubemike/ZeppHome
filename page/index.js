@@ -63,65 +63,73 @@ Page(
         },
       });
 
-      timeoutPromise(this.httpRequest({
-          method: "GET",
-          url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/sensor.temperature',
-          headers: headers
-      }), 3000)
-        .then((result) => {
-            log(result.body.state, result.body.attributes.unit_of_measurement)
-            temp.text =  [Number(result.body.state).toFixed(1), result.body.attributes.unit_of_measurement].join(' ')
-        })
-        .catch((error) => {
-          hmUI.showToast({
-            text: error.toString()
-          });
-        });
+      setTimeout(() => {
+          timeoutPromise(this.httpRequest({
+              method: "GET",
+              url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/sensor.temperature',
+              headers: headers
+          }), 5000)
+            .then((result) => {
+                log(result.body.state, result.body.attributes.unit_of_measurement)
+                temp.text =  [Number(result.body.state).toFixed(1), result.body.attributes.unit_of_measurement].join(' ')
+            })
+            .catch((error) => {
+              hmUI.showToast({
+                text: error.toString()
+              });
+            })
+      }, 250)
 
-      timeoutPromise(this.httpRequest({
-          method: "GET",
-          url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/sensor.humidity',
-          headers: headers
-      }), 3000)
-        .then((result) => {
-            log(result.body.state, result.body.attributes.unit_of_measurement)
-            humidity.text =  [Number(result.body.state).toFixed(1), result.body.attributes.unit_of_measurement].join(' ')
-        })
-        .catch((error) => {
-          hmUI.showToast({
-            text: error.toString()
-          });
-        });
+      setTimeout(() => {
+          timeoutPromise(this.httpRequest({
+              method: "GET",
+              url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/sensor.humidity',
+              headers: headers
+          }), 5000)
+            .then((result) => {
+                log(result.body.state, result.body.attributes.unit_of_measurement)
+                humidity.text =  [Number(result.body.state).toFixed(1), result.body.attributes.unit_of_measurement].join(' ')
+            })
+            .catch((error) => {
+              hmUI.showToast({
+                text: error.toString()
+              });
+            });
+      }, 500)
 
-      timeoutPromise(this.httpRequest({
-          method: "GET",
-          url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/light.lamp',
-          headers: headers
-      }), 3000)
-        .then((response) => {
-            log(response.body.state)
-            lightButton.text =  ['Light:', response.body.state].join(' ')
-        })
-        .catch((error) => {
-          hmUI.showToast({
-            text: error.toString()
-          });
-        });
+      setTimeout(() => {
+          timeoutPromise(this.httpRequest({
+              method: "GET",
+              url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/light.lamp',
+              headers: headers
+          }), 5000)
+            .then((response) => {
+                log(response.body.state)
+                lightButton.text =  ['Light:', response.body.state].join(' ')
+            })
+            .catch((error) => {
+              hmUI.showToast({
+                text: error.toString()
+              });
+            });
+      }, 750);
 
-      timeoutPromise(this.httpRequest({
-          method: "GET",
-          url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/cover.blinds',
-          headers: headers
-      }), 3000)
-        .then((response) => {
-            log(response.body.state)
-            blindsButton.text =  ['Blinds:', response.body.state].join(' ')
-        })
-        .catch((error) => {
-          hmUI.showToast({
-            text: error.toString()
-          });
-        });
+      setTimeout(() => {
+          timeoutPromise(this.httpRequest({
+              method: "GET",
+              url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/cover.blinds',
+              headers: headers
+          }), 5000)
+            .then((response) => {
+                log(response.body.state)
+                blindsButton.text =  ['Blinds:', response.body.state].join(' ')
+            })
+            .catch((error) => {
+              hmUI.showToast({
+                text: error.toString()
+              });
+            });
+      }, 1000)
 
       temp = hmUI.createWidget(hmUI.widget.TEXT, {
           x: 100,
@@ -129,7 +137,7 @@ Page(
           w: 200,
           h: 50,
           text_size: px(36),
-          text: 'fooo',
+          text: '???',
           color: '0xffffff'
       })
 
@@ -139,7 +147,7 @@ Page(
           w: 200,
           h: 50,
           text_size: px(36),
-          text: 'fooo',
+          text: '???',
           color: '0xffffff'
       })
 
