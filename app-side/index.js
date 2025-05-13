@@ -7,32 +7,6 @@ const headers = {
 
 async function test(res) {
   try {
-    // Requesting network data using the fetch API
-    // The sample program is for simulation only and does not request real network data, so it is commented here
-    // Example of a GET method request
-    // const { body: { data = {} } = {} } = await fetch({
-    //   url: 'https://xxx.com/api/xxx',
-    //   method: 'GET'
-    // })
-    // Example of a POST method request
-    // const { body: { data = {} } = {} } = await fetch({
-    //   url: 'https://xxx.com/api/xxx',
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify({
-    //     text: 'Hello Zepp OS'
-    //   })
-    // })
-
-    // A network request is simulated here, Reference documentation: https://jsonplaceholder.typicode.com/
-    //const response = await fetch({
-    //  url: 'https://jsonplaceholder.typicode.com/todos/1',
-    //  method: 'GET'
-    //})
-    //const resBody = typeof response.body === 'string' ? JSON.parse(response.body) : response.body
-
     res(null, {
       status: 123,
     });
@@ -43,49 +17,49 @@ async function test(res) {
   }
 };
 
-async function get_climate(res) {
+async function fetchEndpoint(endpoint) {
+    let response;
     try {
-        let response
         response = await fetch({
             method: "GET",
-            url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/sensor.temperature',
+            url:  'http://homeassistant.sphinx-city.ts.net:8123/api/' + endpoint,
             headers: headers
         })
-        const resBodyTemp = typeof response.body === 'string' ? JSON.parse(response.body) : response.body
-        console.log(resBodyTemp)
-
-        response = await fetch({
-            method: "GET",
-            url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/sensor.humidity',
-            headers: headers
-        })
-        const resBodyHumidity = typeof response.body === 'string' ? JSON.parse(response.body) : response.body
-        console.log(resBodyHumidity)
-
-        response = await fetch({
-            method: "GET",
-            url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/light.lamp',
-            headers: headers
-        })
-        const resBodyLight = typeof response.body === 'string' ? JSON.parse(response.body) : response.body
-        console.log(resBodyLight)
-
-        response = await fetch({
-            method: "GET",
-            url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/cover.blinds',
-            headers: headers
-        })
-        const resBodyBlinds = typeof response.body === 'string' ? JSON.parse(response.body) : response.body
-
-        res(null, {
-            temperature: {value: resBodyTemp.state, unit: resBodyTemp.attributes.unit_of_measurement},
-            humidity: {value: resBodyHumidity.state, unit: resBodyHumidity.attributes.unit_of_measurement},
-            light: {value: resBodyLight.state},
-            blinds: {value: resBodyBlinds.state},
-        });
+        const resBody = typeof response.body === 'string' ? JSON.parse(response.body) : response.body
+        console.log(resBody)
+        return resBody;
     } catch {
     }
 }
+
+async function fetchEndpoints(res, endpoints) {
+    let response = {};
+    try {
+        for (endpointName in endpoints) {
+            response[endpointName] = await fetchEndpoint(endpoints[endpointName]);
+        }
+        console.log(response)
+
+        res(null, response);
+    } catch {
+    }
+}
+
+async function toggleEntity(res, entity) {
+    let response;
+    try {
+        response = await fetch({
+            method: "POST",
+            url:  'http://homeassistant.sphinx-city.ts.net:8123/api/services/homeassistant/toggle',
+            headers: headers,
+            body: JSON.stringify({entity_id: entity})
+        })
+        const resBody = typeof response.body === 'string' ? JSON.parse(response.body) : response.body
+        res(null, resBody);
+    } catch {
+    }
+}
+
 
 AppSideService(
   BaseSideService({
@@ -95,8 +69,12 @@ AppSideService(
       console.log("=====>,", req.method);
       if (req.method === "TEST") {
         test(res);
-      } else if (req.method == "GET_CLIMATE") {
-        get_climate(res);
+      } else if (req.method == "FETCH_ENDPOINTS") {
+        console.log(req.endpoints);
+        fetchEndpoints(res, req.endpoints);
+      } else if (req.method == "TOGGLE_ENTITY") {
+        console.log(req.entity)
+        toggleEntity(res, req.entity);
       }
     },
 

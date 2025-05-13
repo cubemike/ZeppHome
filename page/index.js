@@ -14,11 +14,6 @@ function timeoutPromise(promise, timeout) {
     return Promise.race([promise, timeoutP]);
 };
 
-const headers = {
-    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI3YzlmNWQ2YWJkNDM0MjEwYjMxZDlkYThmNDg4OTI2ZCIsImlhdCI6MTc0MzczMDk2MywiZXhwIjoyMDU5MDkwOTYzfQ.FPJ0AU0wqHt6rPdMRXuaWRdMaihLtWec6nKt8-4006Q",
-    "content-type": "application/json"
-}
-
 let textWidget;
 let temp, humidity;
 let lightButton, blindsButton;
@@ -27,19 +22,28 @@ function log() {
     console.log([...arguments].join(' '))
 }
 
+const endpoints = {
+    temperature: "states/sensor.temperature",
+       humidity: "states/sensor.humidity",
+          light: "states/light.lamp",
+         blinds: "states/cover.blinds"
+};
+
 Page(
   BasePage({
     state: {},
     build() {
+
       lightButton = hmUI.createWidget(hmUI.widget.BUTTON, {
         ...FETCH_BUTTON,
         h: 100,
         y: 130,
         text: "Light: ???",
         click_func: (button_widget) => {
-          this.toggleLight();
+          this.toggleEntity("light.lamp");
         },
       });
+
       blindsButton = hmUI.createWidget(hmUI.widget.BUTTON, {
         ...FETCH_BUTTON,
         h: 100,
@@ -47,9 +51,10 @@ Page(
 
         text: "Blinds: ???",
         click_func: (button_widget) => {
-          this.toggleBlinds();
+          this.toggleEntity("cover.blinds");
         },
       });
+
       hmUI.createWidget(hmUI.widget.BUTTON, {
         ...FETCH_BUTTON,
         h: 50,
@@ -63,7 +68,7 @@ Page(
         },
       });
 
-      temp = hmUI.createWidget(hmUI.widget.TEXT, {
+      temperature = hmUI.createWidget(hmUI.widget.TEXT, {
           x: 100,
           y: 70,
           w: 200,
@@ -83,39 +88,34 @@ Page(
           color: '0xffffff'
       })
 
+      this.updateAll();
+
+    },
+
+    updateAll() {
       timeoutPromise(this.request({
-          method: "GET_CLIMATE"
+          method: "FETCH_ENDPOINTS",
+          endpoints: endpoints
       }), 3000).then((response) => {
           console.log(JSON.stringify(response))
-          temp.text =  [Number(response.temperature.value).toFixed(1), response.temperature.unit].join(' ')
-          humidity.text =  [Number(response.humidity.value).toFixed(1), response.humidity.unit].join(' ')
-          lightButton.text =  ['Light:', response.light.value].join(' ')
-          blindsButton.text =  ['Blinds:', response.blinds.value].join(' ')
+           temperature.text = [Number(response.temperature.state).toFixed(1), response.temperature.attributes.unit_of_measurement].join('')
+              humidity.text = [Number(response.humidity.state).toFixed(1), response.humidity.attributes.unit_of_measurement].join('')
+           lightButton.text = ['Light:', response.light.state].join(' ')
+          blindsButton.text = ['Blinds:', response.blinds.state].join(' ')
       }).catch((error) => {
           hmUI.showToast({
             text: error.toString()
           })
       })
-
-
-
     },
-    toggleLight() {
-      timeoutPromise(this.httpRequest({
-        method: "POST",
-        url: 'http://homeassistant.sphinx-city.ts.net:8123/api/services/light/toggle',
-        headers: headers,
-        body: JSON.stringify({entity_id: "light.lamp"})
+
+    toggleEntity(entity) {
+      timeoutPromise(this.request({
+        method: "TOGGLE_ENTITY",
+        entity: entity
       }), 3000)
         .then((result) => {
-          logger.log("receive data");
-          Object.keys(result).forEach((key) => {
-              console.log(key)
-          })
-          console.log(JSON.stringify(result))
-          console.log(result.status)
-          console.log(JSON.stringify(result.body[0].state))
-          lightButton.text =  ['Light:', result.body[0].state].join(' ')
+          this.updateAll();
         })
         .catch((error) => {
           hmUI.showToast({
@@ -123,38 +123,7 @@ Page(
           })
         });
     },
-    toggleBlinds() {
-      timeoutPromise(this.httpRequest({
-        method: "POST",
-        url: 'http://homeassistant.sphinx-city.ts.net:8123/api/services/cover/toggle',
-        headers: headers,
-        body: JSON.stringify({entity_id: "cover.blinds"})
-      }), 3000)
-        .then((result) => {
-          logger.log("receive data");
-          console.log(JSON.stringify(result.body))
-          console.log(result.status)
-          timeoutPromise(this.httpRequest({
-              method: "GET",
-              url:  'http://homeassistant.sphinx-city.ts.net:8123/api/states/cover.blinds',
-              headers: headers
-          }), 3000)
-            .then((response) => {
-                log(response.body.state)
-                blindsButton.text =  ['Blinds:', response.body.state].join(' ')
-            })
-            .catch((error) => {
-              hmUI.showToast({
-                text: error.toString()
-              });
-            });
-        })
-        .catch((error) => {
-          hmUI.showToast({
-            text: error.toString()
-          })
-        });
-    },
+
     test() {
       timeoutPromise(this.request({
         method: "TEST",
